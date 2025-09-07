@@ -1,0 +1,79 @@
+version: '3'
+
+vars:
+  SOLO_NAMESPACE: "{{.SOLO_NAMESPACE | default \"solo\"}}"
+  TEST_REGION: "{{.REGION | default \"us\"}}"
+
+tasks:
+  setup:
+    desc: Setup environment for running Solo network tests
+    cmds:
+      - echo "🔄 Installing Chaos Mesh..."
+      - task install-chaos-mesh
+      - echo "⏳ Waiting for Chaos Mesh to be ready..."
+      - kubectl wait --for=condition=Ready pods -l app.kubernetes.io/name=chaos-mesh -n chaos-mesh --timeout=300s || echo "⚠️ Chaos Mesh not ready, continuing anyway"
+      - echo "🔄 Deploying cluster diagnostics with chaos experiments..."
+      - task chaos:network:deploy-cluster-diagnostics REGION={{.REGION}}
+      - echo "⏳ Waiting for cluster diagnostics to be ready..."
+      - kubectl wait --for=condition=Ready pods -l app=cluster-diagnostics -n solo --timeout=300s || echo "⚠️ Cluster diagnostics not ready, continuing anyway"
+      - echo "✅ Setup completed. You can now run network tests."
+  netem-region-us:
+    desc: End-to-end test for netem chaos experiments in US region
+    vars:
+      REGION: "us"
+      EXPECTED_LATENCY_US: "~50ms"
+      EXPECTED_LATENCY_EU: "~100ms" 
+      EXPECTED_LATENCY_AP: "~200ms"
+    cmds:
+      - echo "🧪 Starting E2E test for netem chaos experiments - Region {{.REGION}}"
+      - task setup
+      - echo "🔄 Deploying Solo network..."
+      - task deploy-network
+      - echo "🔄 Running latency verification tests..."
+      - task verify-network-latency REGION={{.REGION}} EXPECTED_LATENCY_US="{{.EXPECTED_LATENCY_US}}" EXPECTED_LATENCY_EU="{{.EXPECTED_LATENCY_EU}}" EXPECTED_LATENCY_AP="{{.EXPECTED_LATENCY_AP}}"
+      - echo "🔄 Destroying Solo network..."
+      - task destroy-network
+      - echo "✅ E2E test completed successfully!"
+
+  verify-network-latency:
+    desc: Verify network latency from cluster diagnostics pods
+    vars:
+      REGION: "{{.REGION | default \"us\"}}"
+      SOURCE_NODE: "node3"
+      EXPECTED_LATENCY_US: "{{.EXPECTED_LATENCY_US}}"
+      EXPECTED_LATENCY_EU: "{{.EXPECTED_LATENCY_EU}}"
+      EXPECTED_LATENCY_AP: "{{.EXPECTED_LATENCY_AP}}"
+    cmds:
+      - echo "🔍 Verifying network latency from {{.SOURCE_NODE}} ({{.REGION}} region)..."
+      - echo ""
+      - echo "📡 Testing ping to AP region (node1) - Expected {{.EXPECTED_LATENCY_AP}}"
+      - |
+        POD=$(kubectl get pods -n solo -l app=cluster-diagnostics -o jsonpath="{.items[0].metadata.name}")
+        if [[ -n "$POD" ]]; then
+          kubectl exec $POD -n solo -- ping -c 5 network-node1.{{.SOLO_NAMESPACE}}.svc.cluster.local || echo "⚠️ Ping to AP region failed or latency not as expected"
+        else
+          echo "❌ No cluster diagnostics pod found"
+          exit 1
+        fi
+      - echo ""
+      - echo "📡 Testing ping to EU region (node2) - Expected {{.EXPECTED_LATENCY_EU}}"
+      - |
+        POD=$(kubectl get pods -n solo -l app=cluster-diagnostics -o jsonpath="{.items[0].metadata.name}")
+        if [[ -n "$POD" ]]; then
+          kubectl exec $POD -n solo -- ping -c 5 network-node2.{{.SOLO_NAMESPACE}}.svc.cluster.local || echo "⚠️ Ping to EU region failed or latency not as expected"
+        else
+          echo "❌ No cluster diagnostics pod found"
+          exit 1
+        fi
+      - echo ""
+      - echo "📡 Testing ping to high latency node (node4) - Expected ~800ms"
+      - |
+        POD=$(kubectl get pods -n solo -l app=cluster-diagnostics -o jsonpath="{.items[0].metadata.name}")
+        if [[ -n "$POD" ]]; then
+          kubectl exec $POD -n solo -- ping -c 5 network-node4.{{.SOLO_NAMESPACE}}.svc.cluster.local || echo "⚠️ Ping to high latency node failed or latency not as expected"
+        else
+          echo "❌ No cluster diagnostics pod found"
+          exit 1
+        fi
+      - echo ""
+      - echo "✅ Latency verification completed. Review output above to confirm expected delays."

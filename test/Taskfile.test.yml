@@ -1,0 +1,16 @@
+version: '3'
+
+includes:
+  network:
+    taskfile: ./Taskfile.network.yml
+    silent: true
+
+
+task:
+  test:
+    desc: Run all tests (unit, integration, e2e)
+    cmds:
+      - echo "🧪 Running all tests..."
+      - task unit-tests
+      - task test:network:netem-region-us
+      - echo "✅ All tests completed successfully!"

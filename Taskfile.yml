@@ -9,7 +9,8 @@ includes:
     taskfile: ./dev/taskfile/Taskfile.build.yml
     flatten: true
     silent: false
+  test:
+    taskfile: ./test/Taskfile.test.yml
+    silent: false
 
 dotenv: ['.env', '{{.ENV}}/.env', '{{.HOME}}/.env']
-
-
