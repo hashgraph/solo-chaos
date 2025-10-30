@@ -118,19 +118,25 @@ tasks:
       - |
         echo "🔍 Checking @hashgraph/solo..."
         if ! command -v node >/dev/null 2>&1; then
-          echo "❌ Node.js not found. Exiting."
-          echo ""
-          echo "👉 Activate Node.js ${NODEJS_VERSION} in your current shell and re-run:"
-          echo "nvm use ${NODEJS_VERSION} && task setup"
-          exit 1
+        echo "❌ Node.js not found. Exiting."
+        echo ""
+        echo "👉 Activate Node.js ${NODEJS_VERSION} in your current shell and re-run:"
+        echo "nvm use ${NODEJS_VERSION} && task setup"
+        exit 1
+        fi
+        
+        if ! npm list -g @hashgraph/solo | grep -q "solo@${SOLO_VERSION}"; then
+        echo "⚠️  @hashgraph/solo@${SOLO_VERSION} not installed globally"
+        else
+        echo "✅ @hashgraph/solo@${SOLO_VERSION} is installed"
         fi
         
         echo "Using Node.js $(node -v) from $(which node)"
-        if ! npm list -g | grep -q '@hashgraph/solo'; then
-          echo "⬇️  Installing @hashgraph/solo..."
-          npm install -g @hashgraph/solo
+        if ! npm list -g @hashgraph/solo | grep -q "solo@${SOLO_VERSION}"; then
+          echo "⬇️  Installing @hashgraph/solo@${SOLO_VERSION}..."
+          npm install -g @hashgraph/solo@${SOLO_VERSION}
         else
-          echo "✅ @hashgraph/solo already installed"
+          echo "✅ @hashgraph/solo@${SOLO_VERSION} already installed"
         fi
       - echo "🎉 Environment initialization complete!"
 
