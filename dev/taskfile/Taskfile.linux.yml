@@ -104,13 +104,10 @@ tasks:
     silent: true
     cmds:
       - |
-        echo "🧹 Removing CLI tools..."
-        for cmd in kubectl k9s kind helm; do
-          if command -v $cmd &> /dev/null; then
-            echo "❌ Uninstalling $cmd..."
-            sudo apt-get remove -y $cmd || true
-          fi
-        done
+        echo "🧹 Removing docker registry cache ..."
+        docker stop docker_registry_proxy || true
+        rm -rf $HOME/docker_mirror_cache || true
+        rm -rf $HOME/docker_mirror_certs || true
       - |
         echo "🧹 Removing @hashgraph/solo..."
         export NVM_DIR="$HOME/.nvm"
@@ -122,10 +119,18 @@ tasks:
         echo "🧹 Removing Kind cluster..."
         if kind get clusters | grep -q "${SOLO_CLUSTER_NAME}"; then
           kind delete cluster --name "${SOLO_CLUSTER_NAME}"
-          echo "✅ Cluster ${SOLO_CLUSTER_NAME} deleted"
+        echo "✅ Cluster ${SOLO_CLUSTER_NAME} deleted"
         else
           echo "ℹ️  No cluster named ${SOLO_CLUSTER_NAME} found"
         fi
+      - |
+        echo "🧹 Removing CLI tools..."
+        for cmd in kubectl k9s kind helm; do
+          if command -v $cmd &> /dev/null; then
+            echo "🧹 Uninstalling $cmd..."
+            sudo apt-get remove -y $cmd || true
+          fi
+        done
       - |
         echo "🧹 Cleaning up ~/.solo..."
         rm -rf ~/.solo || true
