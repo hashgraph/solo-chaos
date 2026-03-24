@@ -55,6 +55,23 @@ tasks:
       - task show-experiment-status NAME="solo-chaos-network-netem-us-to-ap" TYPE="NetworkChaos"
     env:
       NAMESPACE: "{{.NAMESPACE}}"
+      
+  block-node-netem:
+    desc: Run Network Chaos experiments for Block node (network emulation with global RTT latencies)
+    vars:
+      NAMESPACE: "{{.NAMESPACE | default .SOLO_NAMESPACE}}"
+    cmds:
+      - echo "🔍 Validating environment variables..."
+      - "{{.TASKFILE_DIR}}/validate-env.sh --require-namespace"
+      - echo "🔄 Running Network Latency Chaos experiments with global RTT emulation..."
+      - echo "NAMESPACE=${NAMESPACE}"
+      - echo "Applying region-based latency - us<->us 20ms RTT, us<->eu 100ms RTT, us<->ap 200ms RTT, eu<->eu 20ms RTT, eu<->ap 300ms RTT, ap<->ap 20ms RTT"
+      - envsubst < {{.TASKFILE_DIR}}/block-node/network/netem-us-ohio.yml | kubectl apply -f -
+      - echo "✅ Global latency Chaos experiments applied."
+      - task show-experiment-status NAME="solo-chaos-network-netem-block-node-us-to-ap" TYPE="NetworkChaos"
+    env:
+      NAMESPACE: "{{.NAMESPACE}}"
+      
   deploy-cluster-diagnostics:
     desc: Deploy cluster diagnostics pods
     vars:

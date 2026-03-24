@@ -1,0 +1,27 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: solo-chaos-network-netem-block-node-us-to-ap
+  namespace: chaos-mesh
+spec:
+  action: netem
+  mode: all
+  selector:
+    namespaces:
+      - ${NAMESPACE}
+    labelSelectors:
+      'solo.hedera.com/type': 'network-node'
+      'solo.hedera.com/region': 'us'
+  target:
+    mode: all
+    selector:
+      namespaces:
+        - ${NAMESPACE}
+      labelSelectors:
+        'app.kubernetes.io/name': 'block-node-1'
+  delay:
+    latency: '100ms'   # us <-> ap: 200ms RTT (100ms one-way)
+    correlation: '80'
+    jitter: '20ms'
+  rate:
+    rate: '1gbps'
