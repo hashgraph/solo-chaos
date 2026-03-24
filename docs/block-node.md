@@ -6,7 +6,7 @@ This guide walks through testing network latency between a block node and a US-r
 
 - Deploys a block node alongside the Solo network.
 - Deploys a cluster diagnostics pod labelled as the `us` region to emulate a US-region consensus node.
-- Applies a `NetworkChaos` experiment (`chaos/block-node/network/netem-us-ohio.yml`) that adds ~100ms **one-way** latency (200ms RTT) on traffic from US-region consensus nodes (`solo.hedera.com/region=us`) to the block node (`app.kubernetes.io/name=block-node-1`), simulating the block node being in the AP region.
+- Applies a `NetworkChaos` experiment (`chaos/block-node/network/netem-us-ohio.yml`) that adds ~100ms **one-way** latency (200ms RTT) on traffic from US-region consensus nodes (`solo.hedera.com/region=us`) to the block node (`solo.hedera.com/type=block-node`), simulating the block node being in the AP region.
 - Uses a fixed resource name (`solo-chaos-network-netem-block-node-us-to-ap`) so reruns replace the experiment rather than accumulate.
 
 ## Full Reproduction Steps
@@ -24,8 +24,10 @@ task install-chaos-mesh
 > Requires solo v0.48.0+ (the version pinned in this repo).
 
 ```bash
-solo block node add --deployment solo-deployment
+task deploy-block-node
 ```
+
+This deploys the block node via the Solo CLI, waits for the pod to become Ready, and applies the required chaos labels (`solo.hedera.com/type=block-node`, `solo.hedera.com/region=ap`) automatically.
 
 ### 3. Deploy cluster diagnostics in the US region
 

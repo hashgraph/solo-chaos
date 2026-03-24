@@ -22,13 +22,11 @@ task deploy-hammer-job
 task chaos:consensus-node:pod-kill NODE_NAMES=node5
 ```
 
-## Scenario Guides
+## Documentation
 
 | Guide | What it covers |
 |---|---|
+| [`docs/getting-started.md`](docs/getting-started.md) | **Start here** — apply experiments to any Solo network (fresh or existing) |
 | [`docs/consensus-node.md`](docs/consensus-node.md) | Cross-region latency simulation · Pod kill with live hammer load + node recovery |
-| [`docs/block-node.md`](docs/block-node.md) | Block-node network latency simulation |
-
-## Documentation
-
-Full task catalog, project structure, and contributor guide: [`docs/README.md`](docs/README.md)
+| [`docs/block-node.md`](docs/block-node.md) | Block node network latency simulation |
+| [`docs/README.md`](docs/README.md) | Full task catalog, project structure, contributor guide |

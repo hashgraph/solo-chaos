@@ -27,14 +27,13 @@ Consensus node pods are labeled with `solo.hedera.com/region` (us / eu / ap). Th
 
 ### Step 1: Deploy the diagnostics pod (baseline only, no chaos yet)
 
-Deploy the diagnostics pod directly so netem is not applied yet:
+Deploy the diagnostics pod without any chaos experiment running yet:
 
 ```bash
-REGION=us NAMESPACE=solo envsubst < dev/k8s/cluster-diagnostics.yaml | kubectl apply -f -
-kubectl wait --for=condition=ready pod -l app=cluster-diagnostics -n solo --timeout=120s
+task chaos:deploy-cluster-diagnostics REGION=us
 ```
 
-> Note: `task chaos:deploy-cluster-diagnostics` bundles diagnostics deployment and `consensus-node:network-netem` together. The manual approach above separates them so you can take a baseline reading first.
+This only deploys the diagnostics pod — it does not start any chaos experiment, so baseline latency will be near zero.
 
 ### Step 2: Get the IP of a consensus node in a different region
 

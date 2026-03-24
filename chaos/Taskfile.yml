@@ -19,21 +19,17 @@ includes:
 
 tasks:
   deploy-cluster-diagnostics:
-    desc: "Clean up existing NetworkChaos, deploy cluster diagnostics pod, then apply consensus-node netem"
+    desc: Deploy cluster diagnostics pod labelled with REGION (standalone — does not trigger any chaos experiment)
     vars:
       REGION: '{{.REGION | default "us"}}'
     cmds:
       - echo "🔍 Validating environment variables..."
       - "{{.TASKFILE_DIR}}/validate-env.sh --require-region"
-      - echo "🧹 Cleaning up existing NetworkChaos experiments..."
-      - task cleanup-networkchaos
       - echo "🚀 Deploying cluster diagnostics pods with region={{.REGION}}..."
       - envsubst < {{.TASKFILE_DIR}}/../dev/k8s/cluster-diagnostics.yaml | kubectl apply -f -
       - echo "⏳ Waiting for cluster diagnostics pods to be ready..."
       - kubectl wait --for=condition=ready pod -l app=cluster-diagnostics -n solo --timeout=120s
       - echo "✅ Cluster diagnostics pods deployed and ready."
-      - echo "🔄 Starting network chaos experiments..."
-      - task consensus-node:network-netem
     env:
       REGION: "{{.REGION}}"
 
@@ -64,7 +60,22 @@ tasks:
     cmds:
       - echo "🧹 Cleaning up NetworkChaos experiments..."
       - kubectl delete networkchaos --all -n chaos-mesh --ignore-not-found=true
-      - echo "✅ Cleanup completed."
+      - echo "✅ NetworkChaos cleanup completed."
+
+  cleanup-podchaos:
+    desc: Delete all PodChaos resources
+    cmds:
+      - echo "🧹 Cleaning up PodChaos experiments..."
+      - kubectl delete podchaos --all -n chaos-mesh --ignore-not-found=true
+      - echo "✅ PodChaos cleanup completed."
+
+  cleanup-all:
+    desc: Delete all chaos experiments and cluster diagnostics (full teardown)
+    cmds:
+      - task cleanup-networkchaos
+      - task cleanup-podchaos
+      - task cleanup-cluster-diagnostics
+      - echo "✅ Full chaos teardown completed."
 
   cleanup-cluster-diagnostics:
     desc: Remove cluster diagnostics pod and related resources

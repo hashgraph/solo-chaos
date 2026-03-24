@@ -18,7 +18,8 @@ spec:
       namespaces:
         - ${NAMESPACE}
       labelSelectors:
-        'app.kubernetes.io/name': 'block-node-1'
+        'solo.hedera.com/type': 'block-node'
+        'solo.hedera.com/region': 'ap'
   delay:
     latency: '100ms'   # us <-> ap: 200ms RTT (100ms one-way)
     correlation: '80'

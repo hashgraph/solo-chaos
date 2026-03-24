@@ -10,7 +10,9 @@
 - Command wiring: `cmd/hammer/commands/root.go` registers global flags and mandatory `--config`, then adds `tx` subcommand.
 - Transaction engine: `cmd/hammer/commands/tx.go` creates a shared Hedera client, spawns bot goroutines, and computes live TPS from receipt channel events.
 - Config source: `dev/config/hammer-local.yml` is the canonical example schema (`consensusNodes`, `mirrorNodes`, `operator`).
-- Chaos orchestration: `chaos/Taskfile.yml` includes `consensus-node/Taskfile.yml` and `block-node/Taskfile.yml`; tasks render YAML via `envsubst` and apply with `kubectl`. Shared utilities (diagnostics, cleanup) are in `chaos/Taskfile.yml`; shared task helpers are in `chaos/Taskfile.utils.yml`.
+- Chaos orchestration: `chaos/Taskfile.yml` includes `consensus-node/Taskfile.yml` and `block-node/Taskfile.yml`; tasks render YAML via `envsubst` and apply with `kubectl`. Shared utilities (diagnostics, cleanup) are in `chaos/Taskfile.yml`; shared task helpers in `chaos/Taskfile.utils.yml`.
+- Each component Taskfile has a `smoke-test` task as the CI entrypoint; `task chaos:cleanup-all` tears down all chaos resources and diagnostics in one call.
+- Reusable CI workflow: `.github/workflows/zxc-chaos-test.yaml` — parameterized by `component`, calls `task chaos:<component>:smoke-test` then `task chaos:cleanup-all`.
 
 ## Build/Test Workflow (Do This Order)
 - Use Task, not ad-hoc `go build`/`go test` commands.

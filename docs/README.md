@@ -2,12 +2,13 @@
 
 Reference documentation for running chaos experiments and load testing against Solo networks.
 
-## Scenario Guides
+## Guides
 
-| Guide | Scenarios covered |
+| Guide | What it covers |
 |---|---|
+| [`docs/getting-started.md`](getting-started.md) | **Start here** — apply experiments to any Solo network (fresh or existing) |
 | [`docs/consensus-node.md`](consensus-node.md) | Network latency simulation · Pod kill with hammer load + node recovery |
-| [`docs/block-node.md`](block-node.md) | Block-node network latency simulation |
+| [`docs/block-node.md`](block-node.md) | Block node network latency simulation |
 
 ## Contributor Docs
 
@@ -72,6 +73,8 @@ task network-netem
 | `task setup` | Install prerequisites |
 | `task deploy-network` | Deploy a 5-node Solo network on Kind |
 | `task destroy-network` | Tear down the network |
+| `task deploy-block-node` | Deploy block node via Solo CLI and apply chaos labels |
+| `task destroy-block-node` | Remove the block node deployment |
 | `task install-chaos-mesh` | Install Chaos Mesh via Helm |
 | `task uninstall-chaos-mesh` | Remove Chaos Mesh |
 | `task refresh-node NODE=<name>` | Re-setup and restart a consensus node (e.g. after pod kill) |
@@ -87,6 +90,7 @@ task network-netem
 ### Chaos — Consensus Node
 | Task | Description |
 |---|---|
+| `task chaos:consensus-node:smoke-test` | Run full consensus-node chaos suite (CI entrypoint) |
 | `task chaos:consensus-node:network-netem` | Apply global cross-region latency rules |
 | `task chaos:consensus-node:network-bandwidth NODE_NAMES=<nodes> RATE=<rate>` | Limit bandwidth |
 | `task chaos:consensus-node:network-partition SOURCE_REGION=<r> TARGET_REGION=<r>` | Partition two regions |
@@ -96,15 +100,18 @@ task network-netem
 ### Chaos — Block Node
 | Task | Description |
 |---|---|
+| `task chaos:block-node:smoke-test` | Run full block-node chaos suite (CI entrypoint) |
 | `task chaos:block-node:network-netem` | Apply US-to-AP latency rules for block node traffic |
 
 ### Chaos — Shared Utilities
 | Task | Description |
 |---|---|
-| `task chaos:deploy-cluster-diagnostics REGION=<r>` | **Cleans up all existing NetworkChaos**, deploys diagnostics pod, then applies netem |
+| `task chaos:deploy-cluster-diagnostics REGION=<r>` | Deploy diagnostics pod labelled with region (standalone — no chaos triggered) |
 | `task chaos:exec-cluster-diagnostics` | Exec into the diagnostics pod |
 | `task chaos:cleanup-networkchaos` | Delete all NetworkChaos resources |
-| `task chaos:cleanup-cluster-diagnostics` | Remove the diagnostics pod |
+| `task chaos:cleanup-podchaos` | Delete all PodChaos resources |
+| `task chaos:cleanup-all` | Full teardown: all chaos experiments + diagnostics pod |
+| `task chaos:cleanup-cluster-diagnostics` | Remove the diagnostics pod only |
 
 ### Cross-Region RTT Reference
 
