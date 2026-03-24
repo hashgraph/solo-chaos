@@ -30,9 +30,10 @@ The quickest path. This deploys a 5-node Solo network on a local Kind cluster:
 ```bash
 task setup          # install all prerequisites (macOS / Linux)
 task deploy-network # create Kind cluster + deploy Solo network
+task deploy-block-node # deploy block node with chaos labels
 ```
 
-After this, `SOLO_NAMESPACE=solo` is the default — skip directly to Step 3.
+After this, `SOLO_NAMESPACE=solo` is the default — skip directly to Step 2.
 
 ### Option B — Use an existing network
 
@@ -193,28 +194,110 @@ kubectl get podchaos -n chaos-mesh
 
 ## Measuring the Impact (Cluster Diagnostics Pod)
 
-To observe latency changes before and after chaos injection, deploy a diagnostics pod with `ping`, `iperf3`, and `curl` pre-installed:
+The diagnostics pod gives you a network-connected container with `ping`, `iperf3`, and `curl` pre-installed. Deploy it before applying chaos to capture a baseline, then watch latency change in real time.
+
+### Scenario A — Consensus Node Latency
+
+**1. Deploy the diagnostics pod** (no chaos yet):
 
 ```bash
-# Deploy a diagnostics pod labelled as the 'us' region
 task chaos:deploy-cluster-diagnostics REGION=us
-
-# Exec into it
-task chaos:exec-cluster-diagnostics
 ```
 
-Inside the pod, ping a consensus node to measure latency:
+**2. Get the IP of an EU-region consensus node:**
 
 ```bash
-ping <pod-IP>
+kubectl get pods -n $SOLO_NAMESPACE \
+  -l solo.hedera.com/type=network-node,solo.hedera.com/region=eu \
+  -o jsonpath='{.items[0].status.podIP}'
 ```
 
-Run your chaos experiment from a second terminal, then observe the latency change in the ping output. See [`docs/consensus-node.md`](consensus-node.md) and [`docs/block-node.md`](block-node.md) for full step-by-step walkthroughs with expected output.
+**3. Exec in and measure baseline latency:**
 
-Now, delete the experiment and watch latency return to normal:
+```bash
+task chaos:exec-cluster-diagnostics
+# inside the pod:
+ping <eu-node-pod-IP>
+```
 
-```bash 
-kubectl delete networkchaos solo-chaos-network-netem-block-node-us-to-ap -n chaos-mesh  
+Expected baseline (no chaos active):
+
+```
+64 bytes from 10.244.0.12: icmp_seq=1 ttl=63 time=0.04 ms
+64 bytes from 10.244.0.12: icmp_seq=2 ttl=63 time=0.03 ms
+```
+
+**4. From a second terminal, apply cross-region latency:**
+
+```bash
+task chaos:consensus-node:network-netem
+```
+
+**5. Latency in the diagnostics pod jumps to ~50ms** (us→eu rule, 50ms one-way):
+
+```
+64 bytes from 10.244.0.12: icmp_seq=50 ttl=63 time=49.4 ms
+64 bytes from 10.244.0.12: icmp_seq=51 ttl=63 time=51.7 ms
+```
+
+**Cleanup:**
+
+```bash
+task chaos:cleanup-networkchaos
+task chaos:cleanup-cluster-diagnostics
+```
+
+---
+
+### Scenario B — Block Node Latency
+
+**1. Deploy the diagnostics pod:**
+
+```bash
+task chaos:deploy-cluster-diagnostics REGION=us
+```
+
+**2. Get the block node pod IP:**
+
+```bash
+kubectl get pods -n $SOLO_NAMESPACE \
+  -l solo.hedera.com/type=block-node \
+  -o jsonpath='{.items[0].status.podIP}'
+```
+
+**3. Exec in and measure baseline latency:**
+
+```bash
+task chaos:exec-cluster-diagnostics
+# inside the pod:
+ping <block-node-pod-IP>
+```
+
+Expected baseline:
+
+```
+64 bytes from 10.244.0.44: icmp_seq=1 ttl=63 time=0.03 ms
+64 bytes from 10.244.0.44: icmp_seq=2 ttl=63 time=0.04 ms
+```
+
+**4. From a second terminal, apply block node latency:**
+
+```bash
+task chaos:block-node:network-netem
+```
+
+**5. Latency jumps to ~100ms** (us→ap rule, 100ms one-way / 200ms RTT):
+
+```
+64 bytes from 10.244.0.44: icmp_seq=50 ttl=63 time=99.0 ms
+64 bytes from 10.244.0.44: icmp_seq=51 ttl=63 time=103 ms
+```
+
+**Cleanup:**
+
+```bash
+task chaos:cleanup-networkchaos
+task chaos:cleanup-cluster-diagnostics
 ```
 
 ---
