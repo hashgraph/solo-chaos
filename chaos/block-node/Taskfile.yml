@@ -6,17 +6,6 @@ includes:
     flatten: true
 
 tasks:
-  smoke-test:
-    desc: "Run the full block-node chaos suite: network-netem, then cleanup (CI entrypoint)"
-    vars:
-      NAMESPACE: "{{.NAMESPACE | default .SOLO_NAMESPACE}}"
-    cmds:
-      - echo "🚀 Starting block-node chaos smoke test..."
-      - task network-netem
-      - echo "✅ block-node smoke test complete."
-    env:
-      NAMESPACE: "{{.NAMESPACE}}"
-
   network-netem:
     desc: Apply US-to-AP latency rules for block node traffic (100ms one-way / 200ms RTT)
     vars:

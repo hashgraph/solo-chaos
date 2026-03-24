@@ -94,20 +94,6 @@ tasks:
       NODE_NAMES: "{{.NODE_NAMES}}"
       UUID: "{{.UUID}}"
 
-  smoke-test:
-    desc: "Run the full consensus-node chaos suite: network-netem, pod-kill on node5, then cleanup (CI entrypoint)"
-    vars:
-      NAMESPACE: "{{.NAMESPACE | default .SOLO_NAMESPACE}}"
-      NODE_NAMES: '{{.NODE_NAMES | default "node5"}}'
-    cmds:
-      - echo "🚀 Starting consensus-node chaos smoke test..."
-      - task network-netem
-      - task pod-kill NODE_NAMES={{.NODE_NAMES}}
-      - echo "✅ consensus-node smoke test complete."
-    env:
-      NAMESPACE: "{{.NAMESPACE}}"
-      NODE_NAMES: "{{.NODE_NAMES}}"
-
   pod-failure:
     desc: Trigger pod failure on consensus node(s)
     vars:

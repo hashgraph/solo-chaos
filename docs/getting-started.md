@@ -1,8 +1,10 @@
 # Getting Started — Applying Chaos Experiments to Your Solo Network
 
-This guide explains how to use `solo-chaos` to inject and observe failures against a running Hedera Solo network. You bring the network; this repo provides the chaos tooling.
+This guide explains how to use `solo-chaos` to inject and observe failures against a running Hedera Solo network. You
+bring the network; this repo provides the chaos tooling.
 
 Two paths are supported:
+
 - **Option A** — deploy a fresh network with `task deploy-network` (fastest way to get started)
 - **Option B** — point the tooling at an existing Kubernetes deployment that carries the expected pod labels
 
@@ -12,12 +14,12 @@ Two paths are supported:
 
 Install these tools before running any experiments:
 
-| Tool | Purpose |
-|---|---|
-| [kubectl](https://kubernetes.io/docs/tasks/tools/) | Apply chaos manifests and inspect pods |
-| [Task](https://taskfile.dev/) v3.x | Run experiments via `task chaos:...` commands |
-| `envsubst` (via `gettext`) | Template substitution in chaos manifests |
-| [Helm](https://helm.sh/) | Install Chaos Mesh (one-time) |
+| Tool                                               | Purpose                                       |
+|----------------------------------------------------|-----------------------------------------------|
+| [kubectl](https://kubernetes.io/docs/tasks/tools/) | Apply chaos manifests and inspect pods        |
+| [Task](https://taskfile.dev/) v3.x                 | Run experiments via `task chaos:...` commands |
+| `envsubst` (via `gettext`)                         | Template substitution in chaos manifests      |
+| [Helm](https://helm.sh/)                           | Install Chaos Mesh (one-time)                 |
 
 ---
 
@@ -43,7 +45,8 @@ Export the namespace your Solo pods are running in:
 export SOLO_NAMESPACE=<your-namespace>   # default: solo
 ```
 
-Then verify your pods carry the labels described in the next section. If they were deployed by the Solo CLI, the labels are already present.
+Then verify your pods carry the labels described in the next section. If they were deployed by the Solo CLI, the labels
+are already present.
 
 ---
 
@@ -53,17 +56,17 @@ Chaos experiments target pods using Kubernetes label selectors. The table below 
 
 ### Consensus Nodes
 
-| Label | Required values | Purpose |
-|---|---|---|
-| `solo.hedera.com/type` | `network-node` | Identifies all consensus node pods |
-| `solo.hedera.com/region` | `us`, `eu`, or `ap` | Routes region-specific latency rules |
+| Label                       | Required values       | Purpose                               |
+|-----------------------------|-----------------------|---------------------------------------|
+| `solo.hedera.com/type`      | `network-node`        | Identifies all consensus node pods    |
+| `solo.hedera.com/region`    | `us`, `eu`, or `ap`   | Routes region-specific latency rules  |
 | `solo.hedera.com/node-name` | e.g. `node1`, `node5` | Targets individual pods for pod chaos |
 
 ### Block Node
 
-| Label | Required values | Purpose |
-|---|---|---|
-| `solo.hedera.com/type` | `block-node` | Identifies block node pods |
+| Label                    | Required values     | Purpose                              |
+|--------------------------|---------------------|--------------------------------------|
+| `solo.hedera.com/type`   | `block-node`        | Identifies block node pods           |
 | `solo.hedera.com/region` | `us`, `eu`, or `ap` | Routes region-specific latency rules |
 
 ### Verify labels
@@ -74,7 +77,8 @@ kubectl get pods -n $SOLO_NAMESPACE --show-labels
 
 ### Apply missing labels
 
-**Consensus nodes** — if you deployed with `task deploy-network` or the Solo CLI, labels are already set. Otherwise, add the required labels manually:
+**Consensus nodes** — if you deployed with `task deploy-network` or the Solo CLI, labels are already set. Otherwise, add
+the required labels manually:
 
 ```bash
 kubectl label pod <pod-name> -n $SOLO_NAMESPACE solo.hedera.com/region=us
@@ -86,7 +90,8 @@ kubectl label pod <pod-name> -n $SOLO_NAMESPACE solo.hedera.com/region=us
 task deploy-block-node
 ```
 
-If you already have a running block node and only need to add the labels, use the actual instance name (e.g. `block-node-1`, `block-node-2` — check with `kubectl get pods -n $SOLO_NAMESPACE --show-labels`):
+If you already have a running block node and only need to add the labels, use the actual instance name (e.g.
+`block-node-1`, `block-node-2` — check with `kubectl get pods -n $SOLO_NAMESPACE --show-labels`):
 
 ```bash
 kubectl label pods -n $SOLO_NAMESPACE \
@@ -96,12 +101,12 @@ kubectl label pods -n $SOLO_NAMESPACE \
   --overwrite
 ```
 
-
 ---
 
 ## Step 2: Install Chaos Mesh
 
-Chaos Mesh must be running in your cluster before any experiment can be applied. The task below is idempotent — safe to run multiple times:
+Chaos Mesh must be running in your cluster before any experiment can be applied. The task below is idempotent — safe to
+run multiple times:
 
 ```bash
 task install-chaos-mesh
@@ -127,10 +132,12 @@ kubectl wait --namespace chaos-mesh \
 
 ---
 
-
 ## Step 3: Run Chaos Experiments
 
-All experiments are idempotent — re-running replaces the active experiment rather than accumulating duplicates.
+> Fixed-name netem experiments are idempotent — re-running them replaces the active experiment.
+Experiments whose tasks/manifests include `${UUID}` in `metadata.name` (for example, `pod-kill`, `pod-failure`,
+`network-bandwidth`, `network-partition`) create a new Chaos Mesh resource on each run and will accumulate unless you
+delete prior runs or let them expire.
 
 ### Consensus Node Experiments
 
@@ -177,7 +184,7 @@ task network-netem
 
 ---
 
-## Verifying an Experiment is Active
+### Verifying an Experiment is Active
 
 ```bash
 # Show events for a specific experiment
@@ -192,9 +199,10 @@ kubectl get podchaos -n chaos-mesh
 
 ---
 
-## Measuring the Impact (Cluster Diagnostics Pod)
+### Measuring the Impact (Cluster Diagnostics Pod)
 
-The diagnostics pod gives you a network-connected container with `ping`, `iperf3`, and `curl` pre-installed. Deploy it before applying chaos to capture a baseline, then watch latency change in real time.
+The diagnostics pod gives you a network-connected container with `ping`, `iperf3`, and `curl` pre-installed. Deploy it
+before applying chaos to capture a baseline, then watch latency change in real time.
 
 ### Scenario A — Consensus Node Latency
 
@@ -318,8 +326,8 @@ task chaos:cleanup-cluster-diagnostics # remove diagnostics pod only
 
 ## What's Next
 
-| Guide | What it covers |
-|---|---|
-| [`docs/consensus-node.md`](consensus-node.md) | Full walkthroughs: latency simulation and pod kill with live load |
-| [`docs/block-node.md`](block-node.md) | Block node latency verification with baseline measurements |
-| [`docs/developer-guide.md`](developer-guide.md) | How to contribute new experiments or add a new component |
+| Guide                                           | What it covers                                                    |
+|-------------------------------------------------|-------------------------------------------------------------------|
+| [`docs/consensus-node.md`](consensus-node.md)   | Full walkthroughs: latency simulation and pod kill with live load |
+| [`docs/block-node.md`](block-node.md)           | Block node latency verification with baseline measurements        |
+| [`docs/developer-guide.md`](developer-guide.md) | How to contribute new experiments or add a new component          |

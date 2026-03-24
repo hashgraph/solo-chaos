@@ -28,7 +28,7 @@ tasks:
       - echo "🚀 Deploying cluster diagnostics pods with region={{.REGION}}..."
       - envsubst < {{.TASKFILE_DIR}}/../dev/k8s/cluster-diagnostics.yaml | kubectl apply -f -
       - echo "⏳ Waiting for cluster diagnostics pods to be ready..."
-      - kubectl wait --for=condition=ready pod -l app=cluster-diagnostics -n solo --timeout=120s
+      - kubectl wait --for=condition=ready pod -l app=cluster-diagnostics -n {{.SOLO_NAMESPACE}} --timeout=120s
       - echo "✅ Cluster diagnostics pods deployed and ready."
     env:
       REGION: "{{.REGION}}"
@@ -72,9 +72,9 @@ tasks:
   cleanup-all:
     desc: Delete all chaos experiments and cluster diagnostics (full teardown)
     cmds:
-      - task cleanup-networkchaos
-      - task cleanup-podchaos
-      - task cleanup-cluster-diagnostics
+      - task: cleanup-networkchaos
+      - task: cleanup-podchaos
+      - task: cleanup-cluster-diagnostics
       - echo "✅ Full chaos teardown completed."
 
   cleanup-cluster-diagnostics:

@@ -90,7 +90,6 @@ task network-netem
 ### Chaos — Consensus Node
 | Task | Description |
 |---|---|
-| `task chaos:consensus-node:smoke-test` | Run full consensus-node chaos suite (CI entrypoint) |
 | `task chaos:consensus-node:network-netem` | Apply global cross-region latency rules |
 | `task chaos:consensus-node:network-bandwidth NODE_NAMES=<nodes> RATE=<rate>` | Limit bandwidth |
 | `task chaos:consensus-node:network-partition SOURCE_REGION=<r> TARGET_REGION=<r>` | Partition two regions |
@@ -100,7 +99,6 @@ task network-netem
 ### Chaos — Block Node
 | Task | Description |
 |---|---|
-| `task chaos:block-node:smoke-test` | Run full block-node chaos suite (CI entrypoint) |
 | `task chaos:block-node:network-netem` | Apply US-to-AP latency rules for block node traffic |
 
 ### Chaos — Shared Utilities

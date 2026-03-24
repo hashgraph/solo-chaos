@@ -21,7 +21,7 @@ task install-chaos-mesh
 
 ### 2. Deploy the block node
 
-> Requires solo v0.48.0+ (the version pinned in this repo).
+> Requires solo v0.63.0+ (the version pinned in this repo).
 
 ```bash
 task deploy-block-node
