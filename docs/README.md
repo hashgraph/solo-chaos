@@ -20,12 +20,15 @@ Reference documentation for running chaos experiments and load testing against S
 ```
 solo-chaos/
 ├── chaos/                              # Chaos experiments and taskfiles
-│   ├── Taskfile.yml                    # Main chaos taskfile
-│   ├── Taskfile.chaos.network.yml      # Network chaos tasks
-│   ├── Taskfile.chaos.pod.yml          # Pod chaos tasks
-│   ├── network/                        # Network chaos manifests (netem, bandwidth, partition)
-│   ├── pod/                            # Pod chaos manifests (kill, failure)
-│   └── block-node/                     # Block-node specific manifests
+│   ├── Taskfile.yml                    # Main chaos taskfile (includes consensus-node + block-node)
+│   ├── Taskfile.utils.yml              # Shared utility tasks (show-experiment-status)
+│   ├── consensus-node/                 # Consensus node chaos experiments
+│   │   ├── Taskfile.yml                # Consensus node tasks
+│   │   ├── network/                    # Network chaos manifests (netem, bandwidth, partition)
+│   │   └── pod/                        # Pod chaos manifests (kill, failure)
+│   └── block-node/                     # Block node chaos experiments
+│       ├── Taskfile.yml                # Block node tasks
+│       └── network/                    # Block node network chaos manifests
 ├── dev/
 │   ├── taskfile/                       # Root and build taskfiles
 │   │   ├── Taskfile.build.yml          # Build, test, lint tasks
@@ -36,17 +39,29 @@ solo-chaos/
 └── cmd/hammer/                         # Hammer CLI load generator
 ```
 
-## Running Chaos Tasks from `chaos/`
+## Running Chaos Tasks
 
-Task names are shorter when run from inside the `chaos/` directory:
+Tasks can be run from three different working directories — the prefix changes but the underlying operation is the same:
 
 ```bash
+# From repo root
+task chaos:consensus-node:network-netem
+task chaos:consensus-node:pod-kill NODE_NAMES=node5
+task chaos:block-node:network-netem
+
+# From chaos/  (shorter prefix)
 cd chaos
-task --list
-task pod:consensus-pod-kill NODE_NAMES=node5
-task network:consensus-network-netem
-task network:network-partition-by-region SOURCE_REGION=us TARGET_REGION=eu
-task show-experiment-status NAME=<name> TYPE=<PodChaos|NetworkChaos>
+task consensus-node:network-netem
+task consensus-node:pod-kill NODE_NAMES=node5
+task block-node:network-netem
+
+# From inside a component directory (no prefix)
+cd chaos/consensus-node
+task network-netem
+task pod-kill NODE_NAMES=node5
+
+cd chaos/block-node
+task network-netem
 ```
 
 ## Task Catalog
@@ -69,23 +84,27 @@ task show-experiment-status NAME=<name> TYPE=<PodChaos|NetworkChaos>
 | `task lint:check` | Verify Go formatting |
 | `task test:unit` | Run unit tests + env validation tests |
 
-### Chaos — Pod
+### Chaos — Consensus Node
 | Task | Description |
 |---|---|
-| `task chaos:pod:consensus-pod-kill NODE_NAMES=<nodes>` | Kill consensus pod(s) |
-| `task chaos:pod:consensus-pod-failure NODE_NAMES=<nodes> DURATION=<d>` | Trigger pod failure |
+| `task chaos:consensus-node:network-netem` | Apply global cross-region latency rules |
+| `task chaos:consensus-node:network-bandwidth NODE_NAMES=<nodes> RATE=<rate>` | Limit bandwidth |
+| `task chaos:consensus-node:network-partition SOURCE_REGION=<r> TARGET_REGION=<r>` | Partition two regions |
+| `task chaos:consensus-node:pod-kill NODE_NAMES=<nodes>` | Kill consensus pod(s) |
+| `task chaos:consensus-node:pod-failure NODE_NAMES=<nodes> DURATION=<d>` | Trigger pod failure |
 
-### Chaos — Network
+### Chaos — Block Node
 | Task | Description |
 |---|---|
-| `task chaos:network:consensus-network-netem` | Apply global cross-region latency rules |
-| `task chaos:network:consensus-network-bandwidth NODE_NAMES=<nodes> RATE=<rate>` | Limit bandwidth |
-| `task chaos:network:network-partition-by-region SOURCE_REGION=<r> TARGET_REGION=<r>` | Partition two regions |
-| `task chaos:network:block-node-netem` | Apply block-node latency rules |
-| `task chaos:network:deploy-cluster-diagnostics REGION=<r>` | **Cleans up all existing NetworkChaos**, deploys diagnostics pod, then applies netem |
-| `task chaos:network:exec-cluster-diagnostics` | Exec into the diagnostics pod |
-| `task chaos:network:cleanup-cluster-diagnostics` | Remove the diagnostics pod |
-| `task chaos:network:cleanup-networkchaos` | Delete all NetworkChaos resources |
+| `task chaos:block-node:network-netem` | Apply US-to-AP latency rules for block node traffic |
+
+### Chaos — Shared Utilities
+| Task | Description |
+|---|---|
+| `task chaos:deploy-cluster-diagnostics REGION=<r>` | **Cleans up all existing NetworkChaos**, deploys diagnostics pod, then applies netem |
+| `task chaos:exec-cluster-diagnostics` | Exec into the diagnostics pod |
+| `task chaos:cleanup-networkchaos` | Delete all NetworkChaos resources |
+| `task chaos:cleanup-cluster-diagnostics` | Remove the diagnostics pod |
 
 ### Cross-Region RTT Reference
 
@@ -100,7 +119,7 @@ Latency values applied by `consensus-network-netem` and `block-node-netem`:
 | us ↔ ap | 100ms | 200ms |
 | eu ↔ ap | 150ms | 300ms |
 
-The block-node experiment (`block-node-netem`) applies the `us → ap` rule (100ms one-way / 200ms RTT) between US-region consensus nodes and the block node.
+The block-node experiment (`chaos:block-node:network-netem`) applies the `us → ap` rule (100ms one-way / 200ms RTT) between US-region consensus nodes and the block node.
 
 ### Chaos — Utility
 | Task | Description |

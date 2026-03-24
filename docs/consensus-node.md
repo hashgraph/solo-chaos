@@ -34,7 +34,7 @@ REGION=us NAMESPACE=solo envsubst < dev/k8s/cluster-diagnostics.yaml | kubectl a
 kubectl wait --for=condition=ready pod -l app=cluster-diagnostics -n solo --timeout=120s
 ```
 
-> Note: `task chaos:network:deploy-cluster-diagnostics` bundles diagnostics deployment and `consensus-network-netem` together. The manual approach above separates them so you can take a baseline reading first.
+> Note: `task chaos:deploy-cluster-diagnostics` bundles diagnostics deployment and `consensus-node:network-netem` together. The manual approach above separates them so you can take a baseline reading first.
 
 ### Step 2: Get the IP of a consensus node in a different region
 
@@ -46,7 +46,7 @@ kubectl get pods -n solo -l solo.hedera.com/type=network-node,solo.hedera.com/re
 ### Step 3: Exec into the diagnostics pod
 
 ```bash
-task chaos:network:exec-cluster-diagnostics
+task chaos:exec-cluster-diagnostics
 ```
 
 ### Step 4: Measure baseline latency
@@ -71,7 +71,7 @@ With no chaos active, latency will be near zero:
 From a **separate terminal** (keep the ping running):
 
 ```bash
-task chaos:network:consensus-network-netem
+task chaos:consensus-node:network-netem
 ```
 
 This applies 10 fixed-name `NetworkChaos` resources covering all cross-region paths. The `us → eu` rule adds 50ms one-way latency.
@@ -101,8 +101,8 @@ kubectl get networkchaos -n chaos-mesh
 ### Cleanup
 
 ```bash
-task chaos:network:cleanup-networkchaos
-task chaos:network:cleanup-cluster-diagnostics
+task chaos:cleanup-networkchaos
+task chaos:cleanup-cluster-diagnostics
 ```
 
 ---
@@ -144,7 +144,7 @@ You should see steady transaction receipts and a live TPS count:
 From a **separate terminal** (keep the log stream open):
 
 ```bash
-task chaos:pod:consensus-pod-kill NODE_NAMES=node5
+task chaos:consensus-node:pod-kill NODE_NAMES=node5
 ```
 
 ### Step 5: Observe network resilience
@@ -200,8 +200,7 @@ task destroy-hammer-job
 
 - Main docs index: `docs/README.md`
 - Block-node latency scenario: `docs/block-node.md`
-- Pod chaos task definitions: `chaos/Taskfile.chaos.pod.yml`
-- Network chaos task definitions: `chaos/Taskfile.chaos.network.yml`
-- Netem manifests: `chaos/network/netem-*.yml`
+- Consensus node task definitions: `chaos/consensus-node/Taskfile.yml`
+- Netem manifests: `chaos/consensus-node/network/netem-*.yml`
 - Hammer job manifest: `dev/k8s/solo-chaos-hammer-job.yml`
 

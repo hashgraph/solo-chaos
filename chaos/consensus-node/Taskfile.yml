@@ -1,0 +1,115 @@
+version: '3'
+
+includes:
+  utils:
+    taskfile: ../Taskfile.utils.yml
+    flatten: true
+
+tasks:
+  network-netem:
+    desc: Apply global cross-region latency rules for consensus nodes
+    vars:
+      NAMESPACE: "{{.NAMESPACE | default .SOLO_NAMESPACE}}"
+    cmds:
+      - echo "🔍 Validating environment variables..."
+      - "{{.TASKFILE_DIR}}/../validate-env.sh --require-namespace"
+      - echo "🔄 Running Network Latency Chaos experiments with global RTT emulation..."
+      - echo "NAMESPACE=${NAMESPACE}"
+      - echo "Applying region-based latency - us<->us 20ms RTT, us<->eu 100ms RTT, us<->ap 200ms RTT, eu<->eu 20ms RTT, eu<->ap 300ms RTT, ap<->ap 20ms RTT"
+      - envsubst < {{.TASKFILE_DIR}}/network/netem-800ms.yml | kubectl apply -f -
+      - envsubst < {{.TASKFILE_DIR}}/network/netem-ap-melbourne.yml | kubectl apply -f -
+      - envsubst < {{.TASKFILE_DIR}}/network/netem-eu-london.yml | kubectl apply -f -
+      - envsubst < {{.TASKFILE_DIR}}/network/netem-us-ohio.yml | kubectl apply -f -
+      - echo "✅ Global latency Chaos experiments applied."
+      - task show-experiment-status NAME="solo-chaos-network-netem-800ms" TYPE="NetworkChaos"
+      - task show-experiment-status NAME="solo-chaos-network-netem-ap-to-ap" TYPE="NetworkChaos"
+      - task show-experiment-status NAME="solo-chaos-network-netem-ap-to-us" TYPE="NetworkChaos"
+      - task show-experiment-status NAME="solo-chaos-network-netem-ap-to-eu" TYPE="NetworkChaos"
+      - task show-experiment-status NAME="solo-chaos-network-netem-eu-to-eu" TYPE="NetworkChaos"
+      - task show-experiment-status NAME="solo-chaos-network-netem-eu-to-us" TYPE="NetworkChaos"
+      - task show-experiment-status NAME="solo-chaos-network-netem-eu-to-ap" TYPE="NetworkChaos"
+      - task show-experiment-status NAME="solo-chaos-network-netem-us-to-us" TYPE="NetworkChaos"
+      - task show-experiment-status NAME="solo-chaos-network-netem-us-to-eu" TYPE="NetworkChaos"
+      - task show-experiment-status NAME="solo-chaos-network-netem-us-to-ap" TYPE="NetworkChaos"
+    env:
+      NAMESPACE: "{{.NAMESPACE}}"
+
+  network-bandwidth:
+    desc: Limit bandwidth on consensus node(s)
+    vars:
+      NAMESPACE: "{{.SOLO_NAMESPACE}}"
+      NODE_NAMES: "{{.NODE_NAMES}}"
+      RATE: '{{.RATE | default "1gbps"}}'
+      LIMIT: '{{.LIMIT | default 20971520}}'
+      BUFFER: '{{.BUFFER | default 102400}}'
+    cmds:
+      - echo "🔍 Validating environment variables..."
+      - "{{.TASKFILE_DIR}}/../validate-env.sh --require-namespace --require-node-names"
+      - echo "🔄 Running Network Bandwidth Chaos experiments..."
+      - echo "NAMESPACE=${NAMESPACE}, NODE_NAMES=${NODE_NAMES}, UUID=${UUID}"
+      - envsubst < {{.TASKFILE_DIR}}/network/consensus-node-bandwidth.yml | kubectl apply -f -
+      - echo "✅ Network Bandwidth Chaos experiments applied."
+      - task show-experiment-status NAME="solo-chaos-network-bandwidth-{{.UUID}}" TYPE="NetworkChaos"
+    env:
+      NAMESPACE: "{{.NAMESPACE}}"
+      NODE_NAMES: "{{.NODE_NAMES}}"
+      RATE: "{{.RATE}}"
+      LIMIT: "{{.LIMIT}}"
+      BUFFER: "{{.BUFFER}}"
+      UUID: "{{.UUID}}"
+
+  network-partition:
+    desc: Partition network traffic between two regions
+    vars:
+      NAMESPACE: "{{.SOLO_NAMESPACE}}"
+      SOURCE_REGION: "{{.SOURCE_REGION}}"
+      TARGET_REGION: "{{.TARGET_REGION}}"
+    cmds:
+      - echo "🔄 Running Network Partition Chaos experiments..."
+      - echo "NAMESPACE=${NAMESPACE}, SOURCE_REGION=${SOURCE_REGION}, TARGET_REGION=${TARGET_REGION}, UUID=${UUID}"
+      - envsubst < {{.TASKFILE_DIR}}/network/partition-by-region.yml | kubectl apply -f -
+      - echo "✅ Network Partition Chaos experiments applied."
+      - task show-experiment-status NAME="solo-chaos-network-partition-{{.UUID}}" TYPE="NetworkChaos"
+    env:
+      NAMESPACE: "{{.NAMESPACE}}"
+      SOURCE_REGION: "{{.SOURCE_REGION}}"
+      TARGET_REGION: "{{.TARGET_REGION}}"
+      UUID: "{{.UUID}}"
+
+  pod-kill:
+    desc: Kill consensus node pod(s)
+    vars:
+      NAMESPACE: "{{.SOLO_NAMESPACE}}"
+      NODE_NAMES: "{{.NODE_NAMES}}"
+    cmds:
+      - echo "🔍 Validating environment variables..."
+      - "{{.TASKFILE_DIR}}/../validate-env.sh --require-namespace --require-node-names"
+      - echo "🔄 Running Pod Kill Chaos experiments..."
+      - echo "NAMESPACE=${NAMESPACE}, NODE_NAMES=${NODE_NAMES}, UUID=${UUID}"
+      - envsubst < {{.TASKFILE_DIR}}/pod/consensus-node-kill.yml | kubectl apply -f -
+      - echo "✅ Pod Kill Chaos experiments applied."
+      - task show-experiment-status NAME="solo-chaos-pod-kill-{{.UUID}}" TYPE="PodChaos"
+    env:
+      NAMESPACE: "{{.NAMESPACE}}"
+      NODE_NAMES: "{{.NODE_NAMES}}"
+      UUID: "{{.UUID}}"
+
+  pod-failure:
+    desc: Trigger pod failure on consensus node(s)
+    vars:
+      NAMESPACE: "{{.SOLO_NAMESPACE}}"
+      NODE_NAMES: "{{.NODE_NAMES}}"
+      DURATION: '{{.DURATION | default "30s"}}'
+    cmds:
+      - echo "🔍 Validating environment variables..."
+      - "{{.TASKFILE_DIR}}/../validate-env.sh --require-namespace --require-node-names"
+      - echo "🔄 Running Pod Failure Chaos experiments..."
+      - echo "NAMESPACE=${NAMESPACE}, NODE_NAMES=${NODE_NAMES}, UUID=${UUID}"
+      - envsubst < {{.TASKFILE_DIR}}/pod/consensus-node-failure.yml | kubectl apply -f -
+      - echo "✅ Pod Failure Chaos experiments applied."
+      - task show-experiment-status NAME="solo-chaos-pod-failure-{{.UUID}}" TYPE="PodChaos"
+    env:
+      NAMESPACE: "{{.NAMESPACE}}"
+      NODE_NAMES: "{{.NODE_NAMES}}"
+      DURATION: "{{.DURATION}}"
+      UUID: "{{.UUID}}"

@@ -9,17 +9,77 @@ vars:
     sh: uuidgen | tr -d '-' | head -c 8 | tr '[:upper:]' '[:lower:]'
 
 includes:
-  pod:
-    taskfile: Taskfile.chaos.pod.yml
-  network:
-    taskfile: Taskfile.chaos.network.yml
+  utils:
+    taskfile: Taskfile.utils.yml
+    flatten: true
+  consensus-node:
+    taskfile: consensus-node/Taskfile.yml
+  block-node:
+    taskfile: block-node/Taskfile.yml
 
 tasks:
-  show-experiment-status:
-    desc: Show the status of the pod chaos experiment
+  deploy-cluster-diagnostics:
+    desc: "Clean up existing NetworkChaos, deploy cluster diagnostics pod, then apply consensus-node netem"
     vars:
-      NAME: "{{.NAME}}"
-      TYPE: "{{.TYPE}}"
+      REGION: '{{.REGION | default "us"}}'
     cmds:
-      - echo "🔍 Fetching {{.TYPE}} status..."
-      - kubectl get events --field-selector involvedObject.kind={{.TYPE}},involvedObject.name={{.NAME}} -n chaos-mesh
+      - echo "🔍 Validating environment variables..."
+      - "{{.TASKFILE_DIR}}/validate-env.sh --require-region"
+      - echo "🧹 Cleaning up existing NetworkChaos experiments..."
+      - task cleanup-networkchaos
+      - echo "🚀 Deploying cluster diagnostics pods with region={{.REGION}}..."
+      - envsubst < {{.TASKFILE_DIR}}/../dev/k8s/cluster-diagnostics.yaml | kubectl apply -f -
+      - echo "⏳ Waiting for cluster diagnostics pods to be ready..."
+      - kubectl wait --for=condition=ready pod -l app=cluster-diagnostics -n solo --timeout=120s
+      - echo "✅ Cluster diagnostics pods deployed and ready."
+      - echo "🔄 Starting network chaos experiments..."
+      - task consensus-node:network-netem
+    env:
+      REGION: "{{.REGION}}"
+
+  exec-cluster-diagnostics:
+    desc: Exec into the cluster diagnostics pod for network testing
+    interactive: true
+    vars:
+      NAMESPACE: "{{.NAMESPACE | default .SOLO_NAMESPACE}}"
+    cmds:
+      - echo "🔍 Validating environment variables..."
+      - "{{.TASKFILE_DIR}}/validate-env.sh --require-namespace"
+      - |
+        echo "🔄 Exec into cluster diagnostics pod..."
+        POD=$(kubectl get pods -n "${NAMESPACE}" -l app=cluster-diagnostics -o jsonpath="{.items[0].metadata.name}")
+        if [[ -n "$POD" ]]; then
+          echo "Pod found: $POD"
+          echo "Running exec..."
+          kubectl exec -it -n "${NAMESPACE}" "$POD" -- /bin/bash
+        else
+          echo "❌ No cluster diagnostics pod found in namespace '${NAMESPACE}'"
+          exit 1
+        fi
+    env:
+      NAMESPACE: "{{.NAMESPACE}}"
+
+  cleanup-networkchaos:
+    desc: Delete all NetworkChaos resources
+    cmds:
+      - echo "🧹 Cleaning up NetworkChaos experiments..."
+      - kubectl delete networkchaos --all -n chaos-mesh --ignore-not-found=true
+      - echo "✅ Cleanup completed."
+
+  cleanup-cluster-diagnostics:
+    desc: Remove cluster diagnostics pod and related resources
+    vars:
+      NAMESPACE: "{{.NAMESPACE | default .SOLO_NAMESPACE}}"
+    cmds:
+      - echo "🔍 Validating environment variables..."
+      - "{{.TASKFILE_DIR}}/validate-env.sh --require-namespace"
+      - echo "🧹 Cleaning up cluster diagnostics pods..."
+      - kubectl delete deployment cluster-diagnostics -n ${NAMESPACE} --ignore-not-found=true
+      - kubectl delete service cluster-diagnostics-svc -n ${NAMESPACE} --ignore-not-found=true
+      - kubectl delete configmap cluster-diagnostics-cm -n ${NAMESPACE} --ignore-not-found=true
+      - kubectl delete serviceaccount cluster-diagnostics-sa -n ${NAMESPACE} --ignore-not-found=true
+      - kubectl delete clusterrole cluster-diagnostics-role --ignore-not-found=true
+      - kubectl delete clusterrolebinding cluster-diagnostics-role-binding --ignore-not-found=true
+      - echo "✅ Cluster diagnostics cleanup completed."
+    env:
+      NAMESPACE: "{{.NAMESPACE}}"

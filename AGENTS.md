@@ -10,7 +10,7 @@
 - Command wiring: `cmd/hammer/commands/root.go` registers global flags and mandatory `--config`, then adds `tx` subcommand.
 - Transaction engine: `cmd/hammer/commands/tx.go` creates a shared Hedera client, spawns bot goroutines, and computes live TPS from receipt channel events.
 - Config source: `dev/config/hammer-local.yml` is the canonical example schema (`consensusNodes`, `mirrorNodes`, `operator`).
-- Chaos orchestration: `chaos/Taskfile.yml` includes `Taskfile.chaos.pod.yml` and `Taskfile.chaos.network.yml`; tasks render YAML via `envsubst` and apply with `kubectl`.
+- Chaos orchestration: `chaos/Taskfile.yml` includes `consensus-node/Taskfile.yml` and `block-node/Taskfile.yml`; tasks render YAML via `envsubst` and apply with `kubectl`. Shared utilities (diagnostics, cleanup) are in `chaos/Taskfile.yml`; shared task helpers are in `chaos/Taskfile.utils.yml`.
 
 ## Build/Test Workflow (Do This Order)
 - Use Task, not ad-hoc `go build`/`go test` commands.
@@ -23,10 +23,11 @@
 ## Project-Specific Conventions
 - Root Taskfile is only a dispatcher (`Taskfile.yml` includes `dev/taskfile/Taskfile.{os}.yml` + `Taskfile.build.yml`). Put automation changes in `dev/taskfile/*`.
 - Chaos tasks always validate inputs via `chaos/validate-env.sh` before applying manifests.
-- Pod/network chaos task names differ by context:
-  - repo root: `task chaos:pod:consensus-pod-kill NODE_NAMES=node5`
-  - inside `chaos/`: `task pod:consensus-pod-kill NODE_NAMES=node5`
-- Network netem experiments intentionally use fixed resource names (for replace-not-accumulate behavior), see `chaos/network/netem-*.yml`.
+- Chaos task names differ by working directory:
+  - repo root: `task chaos:consensus-node:pod-kill NODE_NAMES=node5`
+  - inside `chaos/`: `task consensus-node:pod-kill NODE_NAMES=node5`
+  - inside `chaos/consensus-node/`: `task pod-kill NODE_NAMES=node5`
+- Network netem experiments intentionally use fixed resource names (for replace-not-accumulate behavior), see `chaos/consensus-node/network/netem-*.yml` and `chaos/block-node/network/netem-us-ohio.yml`.
 
 ## Integration Points
 - External CLIs used heavily in Taskfiles: `solo`, `kind`, `kubectl`, `helm`, `docker`, `envsubst`, `jq`.
@@ -37,5 +38,5 @@
 - `task --list`
 - `./bin/hammer-$(go env GOOS)-$(go env GOARCH) --help`
 - `./bin/hammer-$(go env GOOS)-$(go env GOARCH) tx --help`
-- `task chaos:network:consensus-network-netem`
+- `task chaos:consensus-node:network-netem`
 

@@ -32,13 +32,13 @@ solo block node add --deployment solo-deployment
 This emulates a network node in the US region and gives you a pod to measure latency from:
 
 ```bash
-task chaos:network:deploy-cluster-diagnostics REGION=us
+task chaos:deploy-cluster-diagnostics REGION=us
 ```
 
 ### 4. Exec into the diagnostics pod
 
 ```bash
-task chaos:network:exec-cluster-diagnostics
+task chaos:exec-cluster-diagnostics
 ```
 
 ### 5. Measure baseline latency to the block node
@@ -63,7 +63,7 @@ With no chaos active, latency will be near zero:
 From a separate terminal (keep the ping running in the diagnostics pod):
 
 ```bash
-task chaos:network:block-node-netem
+task chaos:block-node:network-netem
 ```
 
 ### 7. Verify latency has increased
@@ -95,21 +95,21 @@ kubectl get networkchaos -n chaos-mesh
 ## Cleanup
 
 ```bash
-task chaos:network:cleanup-networkchaos
-task chaos:network:cleanup-cluster-diagnostics
+task chaos:cleanup-networkchaos
+task chaos:cleanup-cluster-diagnostics
 ```
 
 From inside `chaos/`:
 
 ```bash
 cd chaos
-task network:cleanup-networkchaos
-task network:cleanup-cluster-diagnostics
+task cleanup-networkchaos
+task cleanup-cluster-diagnostics
 ```
 
 ## Related Docs
 
 - Main operational guide: `docs/README.md`
-- Network task definitions: `chaos/Taskfile.chaos.network.yml`
+- Block node task definitions: `chaos/block-node/Taskfile.yml`
 - Block-node netem manifest: `chaos/block-node/network/netem-us-ohio.yml`
 - Environment validation: `chaos/validate-env.sh`

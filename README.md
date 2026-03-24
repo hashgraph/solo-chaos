@@ -15,11 +15,11 @@ task deploy-network
 task install-chaos-mesh
 
 # 2. Run a chaos experiment
-task chaos:network:consensus-network-netem
+task chaos:consensus-node:network-netem
 
 # 3. Or kill a node while hammer is running
 task deploy-hammer-job
-task chaos:pod:consensus-pod-kill NODE_NAMES=node5
+task chaos:consensus-node:pod-kill NODE_NAMES=node5
 ```
 
 ## Scenario Guides

@@ -84,8 +84,9 @@ kubectl logs -n solo -l app=solo-chaos-hammer -f
 ### Run chaos from repo root
 
 ```bash
-task chaos:pod:consensus-pod-kill NODE_NAMES=node5
-task chaos:network:consensus-network-netem
+task chaos:consensus-node:pod-kill NODE_NAMES=node5
+task chaos:consensus-node:network-netem
+task chaos:block-node:network-netem
 ```
 
 ### Run chaos directly from `chaos/`
@@ -93,8 +94,18 @@ task chaos:network:consensus-network-netem
 ```bash
 cd chaos
 task --list
-task pod:consensus-pod-kill NODE_NAMES=node5
-task network:consensus-network-netem
+task consensus-node:pod-kill NODE_NAMES=node5
+task consensus-node:network-netem
+task block-node:network-netem
+```
+
+### Run chaos directly from a component directory
+
+```bash
+cd chaos/consensus-node
+task --list
+task pod-kill NODE_NAMES=node5
+task network-netem
 ```
 
 ## Troubleshooting
@@ -114,5 +125,5 @@ task refresh-node NODE=node5
 - To clear network chaos experiments:
 
 ```bash
-task chaos:network:cleanup-networkchaos
+task chaos:cleanup-networkchaos
 ```

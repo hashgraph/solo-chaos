@@ -1,0 +1,11 @@
+version: '3'
+
+tasks:
+  show-experiment-status:
+    desc: Show events for a chaos experiment
+    vars:
+      NAME: "{{.NAME}}"
+      TYPE: "{{.TYPE}}"
+    cmds:
+      - echo "🔍 Fetching {{.TYPE}} status..."
+      - kubectl get events --field-selector involvedObject.kind={{.TYPE}},involvedObject.name={{.NAME}} -n chaos-mesh
