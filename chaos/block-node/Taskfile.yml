@@ -1,0 +1,23 @@
+version: '3'
+
+includes:
+  utils:
+    taskfile: ../Taskfile.utils.yml
+    flatten: true
+
+tasks:
+  network-netem:
+    desc: Apply US-to-AP latency rules for block node traffic (100ms one-way / 200ms RTT)
+    vars:
+      NAMESPACE: "{{.NAMESPACE | default .SOLO_NAMESPACE}}"
+    cmds:
+      - echo "🔍 Validating environment variables..."
+      - "{{.TASKFILE_DIR}}/../validate-env.sh --require-namespace"
+      - echo "🔄 Running Network Latency Chaos experiments for block node..."
+      - echo "NAMESPACE=${NAMESPACE}"
+      - 'echo "Applying us->block-node latency: 100ms one-way (200ms RTT)"'
+      - envsubst < {{.TASKFILE_DIR}}/network/netem-us-ohio.yml | kubectl apply -f -
+      - echo "✅ Block node latency Chaos experiment applied."
+      - task show-experiment-status NAME="solo-chaos-network-netem-block-node-us-to-ap" TYPE="NetworkChaos"
+    env:
+      NAMESPACE: "{{.NAMESPACE}}"

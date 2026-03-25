@@ -109,7 +109,7 @@ export PATH=$PATH:$(go env GOPATH)/bin
 
 ### Adding New Features
 - **CLI commands:** Add to `/cmd/hammer/commands/`
-- **Chaos experiments:** Add YAML to `/chaos/network/` or `/chaos/pod/`
+- **Chaos experiments:** Add YAML to `chaos/consensus-node/network/`, `chaos/consensus-node/pod/`, or `chaos/block-node/network/`
 - **Build changes:** Modify `/dev/taskfile/Taskfile.build.yml`
 
 ### Testing Changes
@@ -118,15 +118,16 @@ export PATH=$PATH:$(go env GOPATH)/bin
 task build && task lint:check && task test:unit
 
 # Run specific hammer commands
-./bin/hammer-linux-amd64 --help
-./bin/hammer-linux-amd64 tx --help
+./bin/hammer-$(go env GOOS)-$(go env GOARCH) --help
+./bin/hammer-$(go env GOOS)-$(go env GOARCH) tx --help
 ```
 
 ## Kubernetes Integration
 
 **Chaos Mesh Experiments:**
-- **Pod Chaos:** `task chaos:pod:consensus-pod-kill NODE_NAMES=node5`
-- **Network Chaos:** `task chaos:network:consensus-network-bandwidth NODE_NAMES=node1 RATE=1gbps`
+- **Pod Chaos:** `task chaos:consensus-node:pod-kill NODE_NAMES=node5`
+- **Network Chaos:** `task chaos:consensus-node:network-bandwidth NODE_NAMES=node1 RATE=1gbps`
+- **Block Node Chaos:** `task chaos:block-node:network-netem`
 
 **Infrastructure Tasks:**
 - `task deploy-network` - Deploy 5-node Solo network
