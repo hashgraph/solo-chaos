@@ -1,5 +1,5 @@
-github.com/automa-saga/logx v0.1.0 h1:BP6CMErwX/YPDlqjNtre1zVhI53wHe8I2CuiNc+cDLQ=
-github.com/automa-saga/logx v0.1.0/go.mod h1:inlus7bMGEUD5wIEgtoKcGO5Ulhl93CHkzUBlqJJK6I=
+github.com/automa-saga/logx v0.3.0 h1:pn2cC9y274cGxCvqWhx6lKsf4Rvpa4vEBlXsMnMEA0M=
+github.com/automa-saga/logx v0.3.0/go.mod h1:inlus7bMGEUD5wIEgtoKcGO5Ulhl93CHkzUBlqJJK6I=
 github.com/btcsuite/btcd/btcec/v2 v2.3.5 h1:dpAlnAwmT1yIBm3exhT1/8iUSD98RDJM5vqJVQDQLiU=
 github.com/btcsuite/btcd/btcec/v2 v2.3.5/go.mod h1:m22FrOAiuxl/tht9wIqAoGHcbnCCaPWyauO8y2LGGtQ=
 github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1 h1:q0rUy8C/TYNBQS1+CGKw68tLOFYSNEs0TFnxxnS9+4U=

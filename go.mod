@@ -3,7 +3,7 @@ module github.com/leninmehedy/solo-chaos
 go 1.24
 
 require (
-	github.com/automa-saga/logx v0.1.0
+	github.com/automa-saga/logx v0.3.0
 	github.com/hiero-ledger/hiero-sdk-go/v2 v2.69.0
 	github.com/joomcode/errorx v1.2.0
 	github.com/spf13/cobra v1.10.1
