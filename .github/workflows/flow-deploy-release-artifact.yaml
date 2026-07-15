@@ -77,7 +77,7 @@ jobs:
           git_tag_gpgsign: false
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
+        uses: step-security/docker-login-action@c3e677aae8393bc9c81cfdf9709648720ea4bd4d # v3.6.0
         with:
           registry: ${{ env.DOCKER_REGISTRY }}
           username: ${{ github.actor }}
@@ -95,10 +95,10 @@ jobs:
           node-version: 20
 
       - name: Setup QEmu Support
-        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
+        uses: step-security/setup-qemu-action@8c4aef027ab2df56e08f597afe6dd8cd31cb84f5 # v3.7.0
 
       - name: Setup Docker Buildx Support
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+        uses: step-security/setup-buildx-action@c60a792b446ef83310733d5cd9d0c8d6870d043f # v3.12.0
         with:
           version: v0.16.2
           driver-opts: network=host
@@ -125,7 +125,7 @@ jobs:
         run: echo "number=$(cat internal/version/VERSION | tr -d '[:space:]')" >> "${GITHUB_OUTPUT}"
 
       - name: Build Docker Image
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        uses: step-security/docker-build-push-action@a8c3d08b23f8be6aeed43eb1a14ce6fe51284438 # v6.18.0
         env:
           SOURCE_DATE_EPOCH: ${{ steps.commit.outputs.source-date }}
         with:
