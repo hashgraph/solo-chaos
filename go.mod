@@ -6,7 +6,7 @@ require (
 	github.com/automa-saga/logx v0.1.0
 	github.com/hiero-ledger/hiero-sdk-go/v2 v2.69.0
 	github.com/joomcode/errorx v1.2.0
-	github.com/spf13/cobra v1.10.1
+	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.11.1
 )
